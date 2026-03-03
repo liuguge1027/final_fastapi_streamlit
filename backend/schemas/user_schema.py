@@ -45,6 +45,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """更新用户请求"""
     username: Optional[str] = None
+    password: Optional[str] = None
     email: Optional[str] = None
     role_id: Optional[int] = None
     is_active: Optional[int] = None
