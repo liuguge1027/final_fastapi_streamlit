@@ -1,13 +1,14 @@
 """密码工具 & JWT 相关"""
 import bcrypt
 from datetime import datetime, timedelta, timezone
-
 import jwt
 
 # JWT 配置
 SECRET_KEY = "your-secret-key-change-in-production"  # TODO: 迁移到 config/环境变量
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 小时
+
+
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

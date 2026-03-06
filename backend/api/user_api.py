@@ -6,8 +6,15 @@ from typing import List
 from backend.db.database import get_db
 from backend.schemas.user_schema import UserInfo, UserCreate, UserUpdate, UserDetail
 from backend.services import user_service
+from backend.core.auth import get_current_user   # ← 新增
 
-router = APIRouter(prefix="/users", tags=["用户管理"])
+router = APIRouter(
+    prefix="/users",
+    tags=["用户管理"],
+    dependencies=[Depends(get_current_user)]   # ← 新增
+)
+
+# router = APIRouter(prefix="/users", tags=["用户管理"])
 
 
 @router.get("", response_model=List[UserDetail])

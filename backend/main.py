@@ -4,7 +4,7 @@ import json
 import jwt
 
 from fastapi import FastAPI, Request
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from backend.db.database import Base, engine, SessionLocal
@@ -26,8 +26,11 @@ from backend.services import operation_log_service
 
 
 # ──────────────────────────────────────────────
-#  权限路径匹配工具
+#  权限路径匹配工具:首个是放行IP
 # ──────────────────────────────────────────────
+
+# whitelist_ips = ["127.0.0.1","192.168.1.2"]
+whitelist_ips = []
 
 def _path_to_regex(path_template: str) -> re.Pattern:
     """
@@ -95,6 +98,62 @@ def _match_action(method: str, path: str) -> tuple[str, str] | None:
 # ──────────────────────────────────────────────
 #  Middleware
 # ──────────────────────────────────────────────
+
+
+class JWTAuthMiddleware(BaseHTTPMiddleware):
+    """
+    全局 JWT 认证中间件。
+    白名单路径无需登录，其余所有路径必须携带合法的 Authorization: Bearer <token>。
+    """
+
+    # 无需认证的路由（method, path）
+    WHITE_LIST: set = {
+        ("POST", "/auth/login"),
+        ("GET",  "/"),
+        ("GET",  "/docs"),
+        ("GET",  "/openapi.json"),
+        ("GET",  "/redoc"),
+    }
+
+    async def dispatch(self, request: Request, call_next):
+        # 1. IP 白名单放行（如：本地或创始人 IP）
+        client_ip = request.client.host if request.client else ""
+        
+        
+        # [DEBUG] 打印 IP 到终端，方便调试
+        # print(f"[AUTH] Request from IP: {client_ip} to {request.url.path}")
+
+        if client_ip in whitelist_ips:
+            return await call_next(request)
+
+        # 2. 路径白名单放行
+        key = (request.method, request.url.path)
+        if key in self.WHITE_LIST:
+            return await call_next(request)
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "未登录，请先获取 Token"},
+            )
+
+        token = auth_header.split(" ", 1)[1]
+        try:
+            jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        except jwt.ExpiredSignatureError:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Token 已过期，请重新登录"},
+            )
+        except jwt.InvalidTokenError:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Token 无效"},
+            )
+
+        return await call_next(request)
+
 
 class OperationLogMiddleware(BaseHTTPMiddleware):
     """全局操作日志中间件：根据 permissions 表自动匹配并记录操作日志"""
@@ -218,7 +277,10 @@ class OperationLogMiddleware(BaseHTTPMiddleware):
 app = FastAPI(title="FastAPI Backend")
 
 # 注册中间件
+# 注意：FastAPI/Starlette 中间件「后注册先执行」
+# JWTAuthMiddleware 后注册，优先拦截请求做认证；认证通过后再由 OperationLogMiddleware 记录日志
 app.add_middleware(OperationLogMiddleware)
+app.add_middleware(JWTAuthMiddleware)
 
 app.include_router(auth_router)
 app.include_router(user_router)
