@@ -247,7 +247,7 @@ class OperationLogMiddleware(BaseHTTPMiddleware):
                 action=action_name,
                 method=request.method,
                 path=path,
-                ip=request.client.host if request.client else None,
+                ip=request.headers.get("X-Client-IP") or (request.client.host if request.client else None),
                 user_agent=request.headers.get("user-agent"),
                 status_code=status_code,
                 success=success,

@@ -1,212 +1,115 @@
-# Final FastAPI + Streamlit Project
+# FastAPI + Streamlit 数据中台实战项目
 
-这是一个结合了FastAPI后端和Streamlit前端的完整项目，提供了用户认证、角色权限管理、财务管理、人力资源管理和销售管理等功能。
+这是一个企业级的前后端分离项目，集成了 **FastAPI** 高性能后端和 **Streamlit** 交互式前端。项目专注于 **自动化审计 (Auditing)**、**全局安全认证 (Security)** 和 **多租户权限管理 (RBAC)**，提供了一套开箱即用的管理系统模板。
 
-## 项目架构
+---
 
-### 技术栈
-- **后端**：FastAPI + SQLAlchemy + MySQL + JWT
-- **前端**：Streamlit + Streamlit-Cookies-Manager
-- **数据库迁移**：Alembic
-- **认证**：JWT Token + 加密Cookie
+## 🌟 核心亮点
 
-### 项目结构
+- 🛡️ **全局 JWT 安全套件**：基于 FastAPI 中间件实现全局身份校验，支持 IP 白名单特权放行。
+- 📝 **自动化全量审计**：内置 `OperationLogMiddleware`，自动记录所有非 GET 请求的操作细节（方法、路径、耗时、IP 及响应状态）。
+- 📂 **全功能 RBAC 模型**：支持 用户 -> 角色 -> 权限 的细粒度控制。
+- 🔄 **前端状态持久化**：使用 `streamlit-cookies-manager` 实现浏览器加密 Cookie 存储，解决 Streamlit 刷新即丢失状态的痛点。
+- ⚡ **异步高性能架构**：后端全程基于异步 FastAPI 驱动，前端提供流畅的原生交互体验。
 
-```
-├── backend/           # FastAPI后端应用
-│   ├── api/           # API路由
-│   ├── core/          # 核心配置和工具
-│   ├── crud/          # 数据库操作
-│   ├── db/            # 数据库连接
-│   ├── models/        # 数据模型
-│   ├── schemas/       # 数据验证和序列化
-│   ├── services/      # 业务逻辑
-│   ├── utils/         # 工具函数
-│   └── main.py        # 后端入口
-├── frontend/          # Streamlit前端应用
-│   ├── components/    # 可复用组件
-│   ├── ui/            # UI模板
-│   ├── utils/         # 工具函数
-│   ├── views/         # 页面视图
-│   │   ├── admin/     # 管理员页面
-│   │   ├── auth/      # 认证页面
-│   │   ├── finance/   # 财务页面
-│   │   ├── hr/        # 人力资源页面
-│   │   ├── manager/   # 经理页面
-│   │   ├── sale/      # 销售页面
-│   │   └── user/      # 用户页面
-│   └── app.py         # 前端入口
-├── scripts/           # 启动脚本
-├── alembic/           # 数据库迁移
-├── README/            # 项目文档
-├── .gitignore         # Git忽略文件
-├── alembic.ini        # Alembic配置
-├── init_db.py         # 数据库初始化脚本
-├── migrate_db.py      # 数据库迁移脚本
-├── requirements.txt   # 项目依赖
-└── README.md          # 项目说明
+---
+
+## 📂 项目结构
+
+```text
+├── backend/                # FastAPI 后端应用
+│   ├── api/                # API 路由 (用户、角色、审计日志等)
+│   ├── core/               # 核心层: auth (全局认证), security (JWT/加密), config
+│   ├── crud/               # 数据库 CRUD 原子操作
+│   ├── db/                 # 数据库连接与 Base 类
+│   ├── models/             # SQLAlchemy 数据模型 (包含 OperationLog)
+│   ├── schemas/            # Pydantic V2 校验模型
+│   ├── services/           # 业务逻辑服务层
+│   └── main.py             # 入口文件 (挂载全局中间件)
+├── frontend/               # Streamlit 前端应用
+│   ├── components/         # 自定义 UI 组件
+│   ├── utils/              # 辅助工具 (auth_utils 实现持久化)
+│   ├── views/              # 业务页面 (按权限模块划分)
+│   └── app.py              # 前端统一入口与路由调度
+├── scripts/                # 一键启动脚本 (Bash)
+├── alembic/                # 数据库版本迁移管理
+├── init_db.py              # 初始化数据库结构入口
+├── migrate_db.py           # 自动化迁移生成工具
+├── seed_data.py            # 基础数据 (超级管理员、角色) 预处理
+└── requirements.txt        # 项目依赖清单
 ```
 
-## 快速开始
+---
 
-### 1. 环境要求
-- Python 3.9+
-- MySQL 5.7+
+## 🚀 快速开始
 
-### 2. 安装步骤
+### 1. 环境准备
+- **Python**: 3.9+
+- **MySQL**: 5.7+ (建议 8.0)
 
-#### 2.1 克隆项目
+### 2. 初始化安装
 ```bash
+# 克隆项目
 git clone https://github.com/liuguge1027/final_fastapi_streamlit.git
 cd final_fastapi_streamlit
-```
 
-#### 2.2 创建虚拟环境
-```bash
+# 创建并激活虚拟环境
 python3 -m venv .venv
-```
+source .venv/bin/activate  # Windows 使用 .venv\Scripts\activate
 
-#### 2.3 激活虚拟环境
-- **MacOS/Linux**:
-  ```bash
-  source .venv/bin/activate
-  ```
-- **Windows**:
-  ```bash
-  .venv\Scripts\activate
-  ```
-
-#### 2.4 安装依赖
-```bash
+# 安装依赖
 pip install -r requirements.txt
 ```
 
-### 3. 数据库配置
+### 3. 后端配置与数据初始化
+1.  **配置数据库**：在 `.env` 或 `backend/core/config.py` 中修改 `MYSQL_` 相关配置。
+2.  **创建数据库表**：
+    ```bash
+    python init_db.py
+    ```
+3.  **导入种子数据**：
+    ```bash
+    python seed_data.py  # 预创建管理账户: admin / password: mikesql.
+    ```
 
-#### 3.1 修改数据库连接信息
-编辑 `backend/core/config.py` 文件，修改以下配置：
+### 4. 运行应用
+我们将启动过程封装在了 `/scripts` 下：
 
-```python
-class Settings(BaseSettings):
-    MYSQL_USER: str = "root"         # 数据库用户名
-    MYSQL_PASSWORD: str = "mikesql."  # 数据库密码
-    MYSQL_HOST: str = "127.0.0.1"     # 数据库主机
-    MYSQL_PORT: int = 3306            # 数据库端口
-    MYSQL_DB: str = "final_db"        # 数据库名称
-
-    @property
-    def DATABASE_URL(self) -> str:
-        return f"mysql+pymysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DB}"
-
-    model_config = ConfigDict(env_file=".env")
-```
-
-#### 3.2 初始化数据库
-```bash
-python init_db.py
-```
-
-#### 3.3 更新模型（当修改models时）
-```bash
-python migrate_db.py
-```
-
-#### 3.4 模型数据导入（首次初始化需要导入）
-```bash
-python seed_data.py
-```### 4. 启动应用
-
-#### 4.1 启动后端
+**启动后端 (Port 8000)**:
 ```bash
 ./scripts/start_backend.sh
 ```
-后端服务将运行在 `http://127.0.0.1:8000`
+*交互式 API 文档地址: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)*
 
-#### 4.2 启动前端
+**启动前端 (Port 8501)**:
 ```bash
 ./scripts/start_frontend.sh
 ```
-前端服务将运行在 `http://localhost:8501`
 
-## 功能模块
+---
 
-### 1. 认证系统
-- 用户注册和登录
-- JWT Token认证
-- 加密Cookie存储
+## 🛠️ 技术内幕
 
-### 2. 角色权限管理
-- 角色创建和管理
-- 权限分配
-- 基于角色的访问控制
+### 全局认证 (backend/core/auth.py)
+通过 `JWTAuthMiddleware` 拦截所有传入请求：
+1. **IP 校验**：特定 IP（如 `127.0.0.1`）可跳过 Token 校验。
+2. **白名单**：`/auth/login` 等公开接口不设限。
+3. **Token 解析**：验证 JWT 有效性及过期时间。
 
-### 3. 财务管理
-- 收入管理
-- 支出管理
-- 管理员专用功能
+### 自动化操作日志 (backend/main.py)
+`OperationLogMiddleware` 会针对 `POST/PUT/DELETE` 请求自动执行：
+- 记录执行用户 ID（从 Token 解析）。
+- 捕获响应体中的错误信息。
+- 计算业务处理耗时（Latency）。
+- **密码脱敏**：敏感字段自动过滤，确保日志安全。
 
-### 4. 人力资源管理
-- 员工管理
-- 绩效评估
+### 登录持久化 (frontend/utils/auth_utils.py)
+利用 `EncryptedCookieManager` 将登录态同步至浏览器 Cookie。即使用户关闭浏览器或刷新页面，前端入口 `app.py` 也会通过 `check_login` 自动恢复 `st.session_state`。
 
-### 5. 销售管理
-- 客户管理
-- 销售记录管理
+---
 
-## 开发指南
+## 📝 许可证
+[MIT License](LICENSE)
 
-### 代码风格
-- 遵循PEP 8编码规范
-- 使用类型提示
-- 模块化设计
-
-### 数据库迁移
-- 使用Alembic进行数据库迁移
-- 运行 `python migrate_db.py` 自动检测模型变化并生成迁移
-
-### 测试
-- 运行单元测试：`pytest`
-- 运行API文档：访问 `http://127.0.0.1:8000/docs`
-
-## 部署
-
-### 生产环境部署
-1. 配置生产环境变量
-2. 使用Gunicorn或Uvicorn运行后端
-3. 使用Streamlit Server运行前端
-4. 配置Nginx作为反向代理
-
-### 环境变量
-可以创建 `.env` 文件来覆盖默认配置：
-
-```
-MYSQL_USER=your_username
-MYSQL_PASSWORD=your_password
-MYSQL_HOST=your_host
-MYSQL_PORT=3306
-MYSQL_DB=your_database
-```
-
-## 常见问题
-
-### 1. 数据库连接失败
-- 检查MySQL服务是否运行
-- 验证数据库配置是否正确
-- 确保数据库用户有足够权限
-
-### 2. 启动失败
-- 检查端口是否被占用
-- 验证依赖是否安装正确
-- 查看日志获取详细错误信息
-
-### 3. 权限问题
-- 确保用户有正确的角色和权限
-- 检查数据库中的角色权限配置
-
-## 贡献
-
-欢迎提交Issue和Pull Request来改进这个项目。
-
-## 许可证
-
-本项目采用MIT许可证。
+## 🤝 贡献
+欢迎 PR 和 Issue，让我们一起完善这个数据中台实战项目！

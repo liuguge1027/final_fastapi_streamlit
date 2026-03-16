@@ -17,9 +17,16 @@ def _handle_login_attempt(cookies: EncryptedCookieManager, username: str, passwo
         return False
 
     try:
+        # 构建请求头，携带浏览器端局域网 IP
+        headers = {"Content-Type": "application/json"}
+        client_ip = st.session_state.get("client_ip", "")
+        if client_ip:
+            headers["X-Client-IP"] = client_ip
+
         response = requests.post(
             f"{API_BASE_URL}/auth/login",
             json={"username": username, "password": password},
+            headers=headers,
             timeout=10,
         )
         if response.status_code == 200:

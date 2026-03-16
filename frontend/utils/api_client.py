@@ -12,10 +12,14 @@ API_BASE_URL = "http://localhost:8000"
 
 
 def get_headers() -> Dict[str, str]:
-    """获取请求头（包含认证 token）"""
+    """获取请求头（包含认证 token 和客户端 IP）"""
     headers = {"Content-Type": "application/json"}
     if "access_token" in st.session_state:
         headers["Authorization"] = f"Bearer {st.session_state.access_token}"
+    # 携带浏览器端获取的局域网 IP
+    client_ip = st.session_state.get("client_ip", "")
+    if client_ip:
+        headers["X-Client-IP"] = client_ip
     return headers
 
 
