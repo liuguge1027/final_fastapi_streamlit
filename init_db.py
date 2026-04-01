@@ -85,8 +85,9 @@ def init_roles(db):
     
     default_roles = [
         {"role_name": "管理员", "role_code": "ADMIN", "description": "系统最高权限管理员", "status": 1},
-        {"role_name": "内容编辑", "role_code": "EDITOR", "description": "负责内容管理和审核", "status": 1},
-        {"role_name": "普通用户", "role_code": "USER", "description": "平台普通注册用户", "status": 1}
+        {"role_name": "销售角色", "role_code": "SALE", "description": "负责销售报表查看与客户管理", "status": 1},
+        {"role_name": "人力资源", "role_code": "HR", "description": "负责员工管理与绩效考核", "status": 1},
+        {"role_name": "财务角色", "role_code": "FINANCE", "description": "负责财务收入与支出报表", "status": 1},
     ]
     
     for role_data in default_roles:
