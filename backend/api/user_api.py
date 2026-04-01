@@ -6,15 +6,13 @@ from typing import List
 from backend.db.database import get_db
 from backend.schemas.user_schema import UserInfo, UserCreate, UserUpdate, UserDetail
 from backend.services import user_service
-from backend.core.auth import get_current_user   # ← 新增
+from backend.core.auth import get_current_user, require_permission
 
 router = APIRouter(
     prefix="/users",
     tags=["用户管理"],
-    dependencies=[Depends(get_current_user)]   # ← 新增
+    dependencies=[Depends(get_current_user)]
 )
-
-# router = APIRouter(prefix="/users", tags=["用户管理"])
 
 
 @router.get("", response_model=List[UserDetail])
@@ -64,9 +62,10 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.post("", response_model=UserInfo)
+@router.post("", response_model=UserInfo,
+             dependencies=[Depends(require_permission("user:create"))])
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    """创建新用户"""
+    """创建新用户（需要 user:create 权限）"""
     existing_user = user_service.get_user_by_username(db, user.username)
     if existing_user:
         raise HTTPException(
@@ -76,9 +75,10 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return user_service.create_user(db, user)
 
 
-@router.put("/{user_id}", response_model=UserInfo)
+@router.put("/{user_id}", response_model=UserInfo,
+            dependencies=[Depends(require_permission("user:update"))])
 def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
-    """更新用户"""
+    """更新用户（需要 user:update 权限）"""
     user = user_service.update_user(db, user_id, user_update)
     if not user:
         raise HTTPException(
@@ -88,9 +88,10 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
     return user
 
 
-@router.delete("/{user_id}")
+@router.delete("/{user_id}",
+               dependencies=[Depends(require_permission("user:delete"))])
 def delete_user(user_id: int, db: Session = Depends(get_db)):
-    """删除用户"""
+    """删除用户（需要 user:delete 权限）"""
     success = user_service.delete_user(db, user_id)
     if not success:
         raise HTTPException(

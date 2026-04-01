@@ -7,8 +7,13 @@ from typing import List
 from backend.db.database import get_db
 from backend.schemas.permission_schema import PermissionInfo, PermissionCreate, PermissionUpdate
 from backend.services import permission_service
+from backend.core.auth import get_current_user, require_permission
 
-router = APIRouter(prefix="/permissions", tags=["权限管理"])
+router = APIRouter(
+    prefix="/permissions",
+    tags=["权限管理"],
+    dependencies=[Depends(get_current_user)]
+)
 
 
 def _permission_to_dict(perm, include_children: bool = False) -> dict:
@@ -81,9 +86,10 @@ def get_permission(permission_id: int, db: Session = Depends(get_db)):
     return _permission_to_dict(permission)
 
 
-@router.post("", response_model=PermissionInfo)
+@router.post("", response_model=PermissionInfo,
+             dependencies=[Depends(require_permission("permission:create"))])
 def create_permission(permission: PermissionCreate, db: Session = Depends(get_db)):
-    """创建新权限"""
+    """创建新权限（需要 permission:create 权限）"""
     existing = permission_service.get_permission_by_code(db, permission.code)
     if existing:
         raise HTTPException(
@@ -94,9 +100,10 @@ def create_permission(permission: PermissionCreate, db: Session = Depends(get_db
     return _permission_to_dict(new_perm)
 
 
-@router.put("/{permission_id}")
+@router.put("/{permission_id}",
+            dependencies=[Depends(require_permission("permission:update"))])
 def update_permission(permission_id: int, permission_update: PermissionUpdate, db: Session = Depends(get_db)):
-    """更新权限"""
+    """更新权限（需要 permission:update 权限）"""
     permission = permission_service.update_permission(db, permission_id, permission_update)
     if not permission:
         raise HTTPException(
@@ -106,9 +113,10 @@ def update_permission(permission_id: int, permission_update: PermissionUpdate, d
     return _permission_to_dict(permission)
 
 
-@router.delete("/{permission_id}")
+@router.delete("/{permission_id}",
+               dependencies=[Depends(require_permission("permission:delete"))])
 def delete_permission(permission_id: int, db: Session = Depends(get_db)):
-    """删除权限"""
+    """删除权限（需要 permission:delete 权限）"""
     success = permission_service.delete_permission(db, permission_id)
     if not success:
         raise HTTPException(

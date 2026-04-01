@@ -6,34 +6,30 @@
 """
 import streamlit as st
 from utils.auth_utils import logout
+from utils.api_client import api_get
 
 
-# =====================================================================
-# 角色菜单配置
-# key = 角色编码 (小写)
-# value = OrderedDict{主菜单名: [子菜单列表]}
-# =====================================================================
+import time
 
-ROLE_MENUS = {
-    "admin": {
-        "系统管理": ["用户管理", "角色管理", "权限管理", "角色权限管理", "操作日志"],
-        "财务报表": ["收入报表", "支出报表"],
-        "销售报表": ["销售报表", "客户报表"],
-        "人力报表": ["员工列表", "绩效考核"],
-    },
-    "finance": {
-        "财务报表": ["收入报表", "支出报表"],
-        "系统管理": ["操作日志"],
-    },
-    "sale": {
-        "销售报表": ["销售报表", "客户报表"],
-        "系统管理": ["操作日志"],
-    },
-    "hr": {
-        "人力报表": ["员工列表", "绩效考核"],
-        "系统管理": ["操作日志"],
-    },
-}
+def get_role_menus() -> dict:
+    """
+    通过接口动态从数据库拉取角色菜单配置
+    （附带缓存 10 秒防重复请求机制）
+    """
+    cache_key = "role_menus_cache"
+    time_key = "role_menus_cache_time"
+    now = time.time()
+    
+    try:
+        if cache_key not in st.session_state or (now - st.session_state.get(time_key, 0) > 10):
+            res = api_get("/role-menus")
+            st.session_state[cache_key] = res if res else {}
+            st.session_state[time_key] = now
+            
+        return st.session_state[cache_key]
+    except Exception as e:
+        st.sidebar.error(f"拉取异常: {e}")
+        return {}
 
 # 角色显示标题
 ROLE_TITLES = {
@@ -56,7 +52,28 @@ def render_sidebar(role: str, cookies) -> tuple:
         tuple: (main_menu, sub_menu)，用户当前选中的主菜单和子菜单
     """
     role_lower = role.lower()
-    menus = ROLE_MENUS.get(role_lower, {})
+    
+    # 动态获取角色菜单配置
+    role_menus_dict = get_role_menus()
+    
+    # 如果是 admin，默认合并赋予所有角色的可用菜单
+    if role_lower == "admin":
+        menus = {}
+        for r, r_menus in role_menus_dict.items():
+            for main_menu, sub_menus in r_menus.items():
+                if main_menu not in r_menus:
+                    continue
+                if main_menu not in menus:
+                    menus[main_menu] = []
+                
+                # sub_menus is now a list of dicts: [{"sub_menu": "...", "module_path": "..."}, ...]
+                existing_sub_names = [m["sub_menu"] for m in menus[main_menu]]
+                for sub_item in sub_menus:
+                    if sub_item["sub_menu"] not in existing_sub_names:
+                        menus[main_menu].append(sub_item)
+    else:
+        menus = role_menus_dict.get(role_lower, {})
+        
     title = ROLE_TITLES.get(role_lower, f"{role}")
 
     with st.sidebar:
@@ -76,11 +93,13 @@ def render_sidebar(role: str, cookies) -> tuple:
             key="sidebar_main_menu",
         )
 
-        # 子菜单选择
-        sub_menu_options = menus.get(main_menu, [])
+        # 子菜单选择 (menus[main_menu] is a list of dicts)
+        sub_menu_list = menus.get(main_menu, [])
+        sub_menu_names = [m["sub_menu"] for m in sub_menu_list]
+        
         sub_menu = st.radio(
             "📄 页面",
-            sub_menu_options,
+            sub_menu_names,
             key="sidebar_sub_menu",
             label_visibility="collapsed",
         )
@@ -90,4 +109,7 @@ def render_sidebar(role: str, cookies) -> tuple:
             logout(cookies)
             st.rerun()
         st.markdown(f"角色: {role}")
+    # 保存当前可用的菜单结构到 session_state，供 page_registry.py 使用
+    st.session_state["active_menus"] = menus
+    
     return main_menu, sub_menu

@@ -13,12 +13,14 @@ from backend.models.role import Role  # noqa: F401
 from backend.models.permission import Permission  # noqa: F401
 from backend.models.role_permission import RolePermission  # noqa: F401
 from backend.models.operation_log import OperationLog  # noqa: F401
+from backend.models.role_menu import RoleMenu  # noqa: F401
 
 from backend.api.auth import router as auth_router
 from backend.api.user_api import router as user_router
 from backend.api.role_api import router as role_router
 from backend.api.permission_api import router as permission_router
 from backend.api.operation_log_api import router as operation_log_router
+from backend.api.role_menu_api import router as role_menu_router
 
 from backend.core.security import SECRET_KEY, ALGORITHM
 from backend.services.user_service import get_user_by_username
@@ -287,6 +289,7 @@ app.include_router(user_router)
 app.include_router(role_router)
 app.include_router(permission_router)
 app.include_router(operation_log_router)
+app.include_router(role_menu_router)
 
 
 @app.on_event("startup")

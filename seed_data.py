@@ -21,7 +21,64 @@ from backend.models.user import User
 from backend.models.permission import Permission
 from backend.models.role_permission import RolePermission
 from backend.models.operation_log import OperationLog
+from backend.models.role_menu import RoleMenu
 
+
+# =====================================================================
+# 角色菜单种子数据
+# =====================================================================
+ROLE_MENUS = {
+    "admin": {
+        "系统管理": [
+            ("用户管理", "views.admin.pages.user_page"),
+            ("角色管理", "views.admin.pages.role_page"),
+            ("权限管理", "views.admin.pages.permission_page"),
+            ("角色权限管理", "views.admin.pages.role_permission_page"),
+            ("菜单管理", "views.admin.role_menus"),
+            ("操作日志", "views.admin.pages.operation_log_page"),
+        ],
+        "财务报表": [
+            ("收入报表", "views.finance.pages.income_page"),
+            ("支出报表", "views.finance.pages.expense_page"),
+        ],
+        "销售报表": [
+            ("销售报表", "views.sale.pages.sales_page"),
+            ("客户报表", "views.sale.pages.customer_page"),
+        ],
+        "人力报表": [
+            ("员工列表", "views.hr.pages.employee_page"),
+            ("绩效考核", "views.hr.pages.performance_page"),
+        ],
+    },
+    "finance": {
+        "财务报表": [
+            ("收入报表", "views.finance.pages.income_page"),
+            ("支出报表", "views.finance.pages.expense_page"),
+        ],
+        "系统管理": [
+            ("操作日志", "views.admin.pages.operation_log_page"),
+        ],
+    },
+    "sale": {
+        "销售报表": [
+            ("销售报表", "views.sale.pages.sales_page"),
+            ("客户报表", "views.sale.pages.customer_page"),
+        ],
+        "系统管理": [
+            ("操作日志", "views.admin.pages.operation_log_page"),
+        ],
+    },
+    "hr": {
+        "人力报表": [
+            ("员工列表", "views.hr.pages.employee_page"),
+            ("绩效考核", "views.hr.pages.performance_page"),
+        ],
+        "系统管理": [
+            ("角色管理", "views.admin.pages.role_page"),
+            ("操作日志", "views.admin.pages.operation_log_page"),
+        ],
+    },
+}
 
 # =====================================================================
 # 权限种子数据
@@ -53,6 +110,12 @@ PERMISSIONS = [
     # 操作日志权限
     {"name": "日志管理", "code": "log:manage", "type": "menu", "path": "/operation-logs", "method": None, "description": "操作日志管理菜单"},
     {"name": "日志列表", "code": "log:list", "type": "api", "path": "/operation-logs", "method": "GET", "description": "查看操作日志"},
+    # 菜单管理权限
+    {"name": "菜单管理", "code": "menu:manage", "type": "menu", "path": "/role-menus", "method": None, "description": "菜单管理菜单"},
+    {"name": "菜单列表", "code": "menu:list", "type": "api", "path": "/role-menus/all", "method": "GET", "description": "查看角色菜单列表"},
+    {"name": "创建菜单映射", "code": "menu:create", "type": "api", "path": "/role-menus", "method": "POST", "description": "创建角色菜单映射"},
+    {"name": "编辑菜单映射", "code": "menu:update", "type": "api", "path": "/role-menus/{id}", "method": "PUT", "description": "编辑角色菜单映射"},
+    {"name": "删除菜单映射", "code": "menu:delete", "type": "api", "path": "/role-menus/{id}", "method": "DELETE", "description": "删除角色菜单映射"},
 ]
 
 
@@ -165,6 +228,42 @@ def seed_operation_logs(db):
     print(f"✓ 操作日志完成 (新增 {len(sample_logs)} 条)\n")
 
 
+def seed_role_menus(db):
+    """插入角色菜单种子数据"""
+    print("=== 插入角色菜单数据 ===")
+    try:
+        # 先清空已有数据
+        db.query(RoleMenu).delete()
+        
+        for role_code, menus in ROLE_MENUS.items():
+            sort_order_main = 0
+            for main_menu, sub_menu_list in menus.items():
+                sort_order_main += 100
+                sort_order_sub = 0
+                for menu_info in sub_menu_list:
+                    sort_order_sub += 1
+                    
+                    if isinstance(menu_info, tuple):
+                        sub_menu, module_path = menu_info
+                    else:
+                        sub_menu, module_path = menu_info, None
+                    
+                    rm = RoleMenu(
+                        role_code=role_code,
+                        main_menu=main_menu,
+                        sub_menu=sub_menu,
+                        module_path=module_path,
+                        sort_order=sort_order_main + sort_order_sub
+                    )
+                    db.add(rm)
+        
+        db.commit()
+        print("✓ 角色菜单数据完成\n")
+    except Exception as e:
+        db.rollback()
+        print(f"  ✗ 角色菜单数据失败: {e}\n")
+
+
 def main():
     print("=" * 60)
     print("种子数据初始化")
@@ -175,6 +274,7 @@ def main():
         seed_permissions(db)
         seed_role_permissions(db)
         seed_operation_logs(db)
+        seed_role_menus(db)
     finally:
         db.close()
 

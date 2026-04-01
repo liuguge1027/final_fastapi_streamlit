@@ -14,53 +14,22 @@ import streamlit as st
 # 模块路径指向含有 show_page() 函数的 Python 模块
 # =====================================================================
 
-PAGE_REGISTRY = {
-    "admin": {
-        ("系统管理", "用户管理"):     "views.admin.pages.user_page",
-        ("系统管理", "角色管理"):     "views.admin.pages.role_page",
-        ("系统管理", "权限管理"):     "views.admin.pages.permission_page",
-        ("系统管理", "角色权限管理"): "views.admin.pages.role_permission_page",
-        ("系统管理", "操作日志"):     "views.admin.pages.operation_log_page",
-        ("财务报表", "收入报表"):     "views.finance.pages.income_page",
-        ("财务报表", "支出报表"):     "views.finance.pages.expense_page",
-        ("销售报表", "销售报表"):     "views.sale.pages.sales_page",
-        ("销售报表", "客户报表"):     "views.sale.pages.customer_page",
-        ("人力报表", "员工列表"):     "views.hr.pages.employee_page",
-        ("人力报表", "绩效考核"):     "views.hr.pages.performance_page",
-    },
-    "finance": {
-        ("财务报表", "收入报表"):     "views.finance.pages.income_page",
-        ("财务报表", "支出报表"):     "views.finance.pages.expense_page",
-        ("系统管理", "操作日志"):     "views.admin.pages.operation_log_page",
-    },
-    "sale": {
-        ("销售报表", "销售报表"):     "views.sale.pages.sales_page",
-        ("销售报表", "客户报表"):     "views.sale.pages.customer_page",
-        ("系统管理", "操作日志"):     "views.admin.pages.operation_log_page",
-    },
-    "hr": {
-        ("人力报表", "员工列表"):     "views.hr.pages.employee_page",
-        ("人力报表", "绩效考核"):     "views.hr.pages.performance_page",
-        ("系统管理", "操作日志"):     "views.admin.pages.operation_log_page",
-    },
-}
-
-
 def route_page(role: str, main_menu: str, sub_menu: str) -> None:
     """
-    根据角色和菜单选择，动态加载并执行对应页面的 show_page() 函数。
-
-    Args:
-        role: 用户角色（小写）
-        main_menu: 主菜单名称
-        sub_menu: 子菜单名称
+    根据角色和菜单选择，从 session_state['active_menus'] 中找到对应的 module_path 并加载。
     """
-    role_lower = role.lower()
-    registry = PAGE_REGISTRY.get(role_lower, {})
-    module_path = registry.get((main_menu, sub_menu))
+    active_menus = st.session_state.get("active_menus", {})
+    sub_menu_list = active_menus.get(main_menu, [])
+    
+    # 查找匹配的子菜单项
+    module_path = None
+    for item in sub_menu_list:
+        if item.get("sub_menu") == sub_menu:
+            module_path = item.get("module_path")
+            break
 
     if not module_path:
-        st.warning(f"⚠️ 当前角色 **{role}** 无权访问页面：{main_menu} > {sub_menu}")
+        st.warning(f"⚠️ 无法找到页面模块映射：{main_menu} > {sub_menu}")
         return
 
     try:
