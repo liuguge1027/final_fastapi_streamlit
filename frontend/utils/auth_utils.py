@@ -73,6 +73,13 @@ def set_token_cookie(
     cookies[_COOKIE_KEY_IS_SUPERUSER] = "1" if is_superuser else "0"
     cookies.save()  # 将更改同步到浏览器
 
+    # 同步写入 localStorage（手机端兜底）
+    try:
+        from utils.local_storage_utils import save_auth_to_local_storage
+        save_auth_to_local_storage(token, username, role, is_superuser)
+    except Exception:
+        pass
+
 
 def get_token_cookie(cookies: EncryptedCookieManager) -> dict | None:
     """
@@ -96,14 +103,7 @@ def get_token_cookie(cookies: EncryptedCookieManager) -> dict | None:
 
 def check_login(cookies: EncryptedCookieManager) -> bool:
     """
-    检查登录状态：优先使用 session_state，其次尝试从 cookie 恢复。
-
-    此函数可在每个业务页面顶部统一调用，一行即可完成登录校验：
-        >>> if not check_login(cookies):
-        ...     st.stop()
-
-    Returns:
-        bool: 当前是否处于已登录状态。
+    检查登录状态：优先使用 session_state，其次尝试从 cookie 恢复，最后尝试 localStorage。
     """
     # 1. session_state 已有登录态 → 直接返回
     if st.session_state.get("logged_in", False):
@@ -119,8 +119,59 @@ def check_login(cookies: EncryptedCookieManager) -> bool:
         st.session_state.is_superuser = saved["is_superuser"]
         return True
 
-    # 3. 无有效登录信息
+    # 3. Cookie 失败时，尝试从 localStorage 恢复（手机端兜底）
+    ls_phase = st.session_state.get("_ls_phase", "init")
+
+    if ls_phase == "init":
+        # 首次：发起 JS 调用，设为 waiting，然后 stop 等待结果
+        try:
+            from utils.local_storage_utils import load_auth_from_local_storage
+            import time
+            # 使用唯一 nonce 确保每次新 session 都强制执行 JS
+            if "_ls_nonce" not in st.session_state:
+                st.session_state["_ls_nonce"] = int(time.time() * 1000)
+            ls_data = load_auth_from_local_storage()
+            
+            if ls_data is None:
+                # JS 尚未执行完毕，标记为 waiting 后 stop
+                st.session_state["_ls_phase"] = "waiting"
+                st.stop()
+            
+            # JS 立即返回了结果
+            st.session_state["_ls_phase"] = "done"
+            if ls_data and ls_data.get("token"):
+                st.session_state.logged_in = True
+                st.session_state.access_token = ls_data["token"]
+                st.session_state.username = ls_data.get("username", "")
+                st.session_state.role = ls_data.get("role", "")
+                st.session_state.is_superuser = ls_data.get("is_superuser", False)
+                return True
+        except Exception as e:
+            st.session_state["_ls_phase"] = "done"
+
+    elif ls_phase == "waiting":
+        # 第二次渲染：JS 应该已经返回结果了
+        try:
+            from utils.local_storage_utils import load_auth_from_local_storage
+            ls_data = load_auth_from_local_storage()
+            
+            if ls_data is None:
+                st.stop()  # DO NOT advance to done yet!
+
+            st.session_state["_ls_phase"] = "done"
+            if ls_data and ls_data.get("token"):
+                st.session_state.logged_in = True
+                st.session_state.access_token = ls_data["token"]
+                st.session_state.username = ls_data.get("username", "")
+                st.session_state.role = ls_data.get("role", "")
+                st.session_state.is_superuser = ls_data.get("is_superuser", False)
+                return True
+        except Exception as e:
+            st.session_state["_ls_phase"] = "done"
+
+    # 4. 无有效登录信息
     return False
+
 
 
 def logout(cookies: EncryptedCookieManager) -> None:
@@ -129,14 +180,21 @@ def logout(cookies: EncryptedCookieManager) -> None:
 
     调用后应紧接 `st.rerun()` 以刷新页面回到登录界面。
     """
-    # 清除 cookiekey
+    # 清除 cookie
     for key in [_COOKIE_KEY_TOKEN, _COOKIE_KEY_USERNAME, _COOKIE_KEY_ROLE, _COOKIE_KEY_IS_SUPERUSER]:
         cookies[key] = ""
     cookies.save()
 
     # 清除 session_state
-    for key in ["logged_in", "access_token", "username", "role", "is_superuser", "current_page"]:
+    for key in ["logged_in", "access_token", "username", "role", "is_superuser", "current_page", "_ls_phase", "_ls_nonce"]:
         st.session_state.pop(key, None)
+
+    # 清除 localStorage（手机端兜底）
+    try:
+        from utils.local_storage_utils import clear_auth_from_local_storage
+        clear_auth_from_local_storage()
+    except Exception:
+        pass
 
 
 def get_user_role() -> str:

@@ -49,7 +49,9 @@ def show_role_page(cookies):
         # 退出登录按钮
         if st.button("🚪 退出登录", type="primary", use_container_width=True):
             logout(cookies)
-            st.rerun()
+            st.success("正在退出...")
+            return
+
 
     # ===== 主内容区域 =====
     if subpages and st.session_state.current_page:

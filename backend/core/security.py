@@ -6,7 +6,7 @@ import jwt
 # JWT 配置
 SECRET_KEY = "your-secret-key-change-in-production"  # TODO: 迁移到 config/环境变量
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 小时
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 168  # 168 小时
 
 
 

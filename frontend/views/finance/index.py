@@ -27,7 +27,8 @@ def show_role_page(cookies):
 
         if st.button("退出登录", type="primary", use_container_width=True):
             logout(cookies)
-            st.rerun()
+            st.success("正在退出...")
+            return
 
     st.title("💰 财务模块")
     st.markdown("---")

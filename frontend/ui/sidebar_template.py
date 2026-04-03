@@ -82,7 +82,8 @@ def render_sidebar(role: str, cookies) -> tuple:
             st.warning("暂无可用菜单")
             if st.button("退出登录", type="primary", use_container_width=True):
                 logout(cookies)
-                st.rerun()
+                st.success("正在退出...")
+                return None, None
             return None, None
 
         # 主菜单选择
@@ -107,7 +108,8 @@ def render_sidebar(role: str, cookies) -> tuple:
 
         if st.button("退出登录", type="primary", use_container_width=True):
             logout(cookies)
-            st.rerun()
+            st.success("正在退出...")
+            return None, None
         st.markdown(f"角色: {role}")
     # 保存当前可用的菜单结构到 session_state，供 page_registry.py 使用
     st.session_state["active_menus"] = menus

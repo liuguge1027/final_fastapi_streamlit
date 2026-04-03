@@ -352,4 +352,4 @@ def show_login_page(cookies: EncryptedCookieManager):
 
         if login_clicked:
             if _handle_login_attempt(cookies, username, password):
-                st.rerun()
+                st.success("✅ 登录成功，系统加载中...")
