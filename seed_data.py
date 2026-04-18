@@ -133,12 +133,9 @@ def seed_role_menus(db):
         db.query(RoleMenu).delete()
         
         for role_code, menus in ROLE_MENUS.items():
-            sort_order_main = 0
+            global_sort_order = 1
             for main_menu, sub_menu_list in menus.items():
-                sort_order_main += 100
-                sort_order_sub = 0
                 for menu_info in sub_menu_list:
-                    sort_order_sub += 1
                     
                     if isinstance(menu_info, tuple):
                         sub_menu, module_path = menu_info
@@ -150,8 +147,9 @@ def seed_role_menus(db):
                         main_menu=main_menu,
                         sub_menu=sub_menu,
                         module_path=module_path,
-                        sort_order=sort_order_main + sort_order_sub
+                        sort_order=global_sort_order
                     )
+                    global_sort_order += 1
                     db.add(rm)
         
         db.commit()
