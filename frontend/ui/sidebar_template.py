@@ -80,7 +80,7 @@ def render_sidebar(role: str, cookies) -> tuple:
         st.markdown(f"##  {title}：👤{st.session_state.get('username', '用户')} ##")
         if not menus:
             st.warning("暂无可用菜单")
-            if st.button("退出登录", type="primary", use_container_width=True):
+            if st.button("退出登录", type="primary", width="stretch"):
                 logout(cookies)
                 st.success("正在退出...")
                 return None, None
@@ -106,7 +106,7 @@ def render_sidebar(role: str, cookies) -> tuple:
         )
 
 
-        if st.button("退出登录", type="primary", use_container_width=True):
+        if st.button("退出登录", type="primary", width="stretch"):
             logout(cookies)
             st.success("正在退出...")
             return None, None

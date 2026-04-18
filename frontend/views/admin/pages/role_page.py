@@ -14,7 +14,7 @@ def show_role_management():
 
     col_add, _ = st.columns([1, 5])
     with col_add:
-        if st.button("➕ 新增角色", key="btn_add_role", use_container_width=True):
+        if st.button("➕ 新增角色", key="btn_add_role", width="stretch"):
             st.session_state.show_add_role_dialog = True
 
     roles = api_get("/roles")
@@ -33,7 +33,7 @@ def show_role_management():
             })
 
         df = pd.DataFrame(table_data)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
 
         # 操作区
         st.markdown("#### 操作")
@@ -128,14 +128,14 @@ def _delete_role_dialog(role_data):
     st.warning(f"确定要删除角色 **{role_data['role_name']}** 吗？此操作不可撤销！")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("确认删除", type="primary", use_container_width=True):
+        if st.button("确认删除", type="primary", width="stretch"):
             result = api_delete(f"/roles/{role_data['id']}")
             if result:
                 st.success("删除成功！")
                 st.session_state.show_delete_role_dialog = False
                 st.rerun()
     with col2:
-        if st.button("取消", use_container_width=True):
+        if st.button("取消", width="stretch"):
             st.session_state.show_delete_role_dialog = False
             st.rerun()
 

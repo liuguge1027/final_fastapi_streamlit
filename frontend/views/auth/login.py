@@ -348,7 +348,7 @@ def show_login_page(cookies: EncryptedCookieManager):
         )
 
         # 登录按钮
-        login_clicked = st.button("登 录", key="login_button", use_container_width=True)
+        login_clicked = st.button("登 录", key="login_button", width="stretch")
 
         if login_clicked:
             if _handle_login_attempt(cookies, username, password):

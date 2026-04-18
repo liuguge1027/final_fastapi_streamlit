@@ -98,7 +98,7 @@ def show_page():
             color=alt.Color('department:N', legend=None, scale=alt.Scale(scheme='tableau10')),
             tooltip=['department', '人数']
         ).properties(height=300)
-        st.altair_chart(base_chart, use_container_width=True)
+        st.altair_chart(base_chart, width="stretch")
 
     with chart_row1_col2:
         st.subheader("⚖️ 账号状态比例")
@@ -108,7 +108,7 @@ def show_page():
             color=alt.Color(field="status", type="nominal", scale=alt.Scale(range=['#2ecc71', '#e74c3c'])),
             tooltip=['status', 'count']
         ).properties(height=300)
-        st.altair_chart(pie_chart, use_container_width=True)
+        st.altair_chart(pie_chart, width="stretch")
 
     st.markdown("### 📈 入职趋势 (累计)")
     # 计算累计增长
@@ -129,7 +129,7 @@ def show_page():
         y=alt.Y('cumulative_count:Q', title='累计员工人数'),
         tooltip=[alt.Tooltip('created_at:T', title='日期'), alt.Tooltip('cumulative_count:Q', title='总人数')]
     ).properties(height=250)
-    st.altair_chart(area_chart, use_container_width=True)
+    st.altair_chart(area_chart, width="stretch")
 
     # 5. 详细列表
     st.markdown("### 📋 员工详情列表")
@@ -151,7 +151,7 @@ def show_page():
     # 使用 st.dataframe 展示，增加搜索和筛选能力
     st.dataframe(
         styled_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={
             "入职时间": st.column_config.DatetimeColumn(format="YYYY-MM-DD HH:mm"),

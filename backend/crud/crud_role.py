@@ -1,9 +1,7 @@
 """角色管理 CRUD 数据库操作层"""
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 from typing import List, Optional
 from backend.models.role import Role
-from backend.models.permission import Permission
-from backend.models.role_permission import RolePermission
 from backend.schemas.role_schema import RoleCreate, RoleUpdate
 
 
@@ -60,53 +58,3 @@ def delete_role(db: Session, role_id: int) -> bool:
     db.delete(db_role)
     db.commit()
     return True
-
-
-# ---- 角色权限管理 ----
-
-def get_role_permissions(db: Session, role_id: int) -> List[Permission]:
-    """获取角色已分配的权限列表"""
-    role = (
-        db.query(Role)
-        .options(selectinload(Role.permissions))
-        .filter(Role.id == role_id)
-        .first()
-    )
-    if not role:
-        return []
-    return role.permissions
-
-
-def assign_permissions_to_role(db: Session, role_id: int, permission_ids: List[int]) -> bool:
-    """为角色批量分配权限"""
-    role = get_role_by_id(db, role_id)
-    if not role:
-        return False
-
-    for pid in permission_ids:
-        existing = (
-            db.query(RolePermission)
-            .filter(RolePermission.role_id == role_id, RolePermission.permission_id == pid)
-            .first()
-        )
-        if not existing:
-            db.add(RolePermission(role_id=role_id, permission_id=pid))
-
-    db.commit()
-    return True
-
-
-def remove_permissions_from_role(db: Session, role_id: int, permission_ids: List[int]) -> bool:
-    """从角色批量移除权限"""
-    role = get_role_by_id(db, role_id)
-    if not role:
-        return False
-
-    db.query(RolePermission).filter(
-        RolePermission.role_id == role_id,
-        RolePermission.permission_id.in_(permission_ids),
-    ).delete(synchronize_session=False)
-
-    db.commit()
-    return True
-

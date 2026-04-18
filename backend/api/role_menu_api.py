@@ -6,7 +6,7 @@ from backend.db.database import get_db
 from backend.models.role_menu import RoleMenu
 from backend.schemas.role_menu_schema import RoleMenu as RoleMenuSchema, RoleMenuCreate, RoleMenuUpdate
 from backend.services import role_menu_service
-from backend.core.auth import get_current_user, require_permission
+from backend.core.auth import get_current_user
 
 router = APIRouter(
     prefix="/role-menus",
@@ -41,10 +41,9 @@ def get_role_menus_list(skip: int = 0, limit: int = 100, db: Session = Depends(g
     """获取所有角色菜单映射（管理列表专用）"""
     return role_menu_service.get_role_menus(db, skip=skip, limit=limit)
 
-@router.post("", response_model=RoleMenuSchema,
-             dependencies=[Depends(require_permission("menu:create"))])
+@router.post("", response_model=RoleMenuSchema)
 def create_role_menu(menu: RoleMenuCreate, db: Session = Depends(get_db)):
-    """创建新的角色菜单映射（需要 menu:create 权限）"""
+    """创建新的角色菜单映射"""
     return role_menu_service.create_role_menu(
         db, 
         role_code=menu.role_code,
@@ -54,10 +53,9 @@ def create_role_menu(menu: RoleMenuCreate, db: Session = Depends(get_db)):
         sort_order=menu.sort_order
     )
 
-@router.put("/{menu_id}", response_model=RoleMenuSchema,
-            dependencies=[Depends(require_permission("menu:update"))])
+@router.put("/{menu_id}", response_model=RoleMenuSchema)
 def update_role_menu(menu_id: int, menu_update: RoleMenuUpdate, db: Session = Depends(get_db)):
-    """更新角色菜单映射（需要 menu:update 权限）"""
+    """更新角色菜单映射"""
     menu = role_menu_service.update_role_menu(db, menu_id, **menu_update.dict(exclude_unset=True))
     if not menu:
         raise HTTPException(
@@ -66,10 +64,9 @@ def update_role_menu(menu_id: int, menu_update: RoleMenuUpdate, db: Session = De
         )
     return menu
 
-@router.delete("/{menu_id}",
-               dependencies=[Depends(require_permission("menu:delete"))])
+@router.delete("/{menu_id}")
 def delete_role_menu(menu_id: int, db: Session = Depends(get_db)):
-    """删除角色菜单映射（需要 menu:delete 权限）"""
+    """删除角色菜单映射"""
     success = role_menu_service.delete_role_menu(db, menu_id)
     if not success:
         raise HTTPException(

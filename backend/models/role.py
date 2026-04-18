@@ -26,7 +26,6 @@ class Role(Base):
     status = Column(Integer, nullable=False, default=1, comment="是否启用，方便禁用某个角色")
 
     users = relationship("User", back_populates="role")
-    permissions = relationship("Permission", secondary="role_permissions", back_populates="roles")
 
     def __repr__(self):
         return f"<Role(id={self.id}, role_name='{self.role_name}', role_code='{self.role_code}')>"

@@ -3,16 +3,7 @@
 ==========
 根据登录状态和用户角色动态加载对应的页面。
 """
-import os
-import importlib.util
 import streamlit as st
-from typing import Optional
-from pathlib import Path
-
-
-def get_views_dir() -> Path:
-    """获取 views 目录的绝对路径"""
-    return Path(__file__).parent.parent / "views"
 
 
 def route_app(cookies) -> None:
@@ -75,54 +66,4 @@ def load_role_index(role: str, cookies) -> None:
         st.info(f"角色 **{role}** 暂无可用菜单，请联系管理员配置权限。")
 
 
-def list_subpages(role: str) -> list[tuple[str, str]]:
-    """
-    列出指定角色目录下的所有子页面。
 
-    Args:
-        role: 用户角色
-
-    Returns:
-        list[tuple[str, str]]: 子页面列表，格式为 [(文件名, 显示名称), ...]
-    """
-    role_lower = role.lower()
-    role_dir = get_views_dir() / role_lower
-
-    if not role_dir.exists():
-        return []
-
-    subpages = []
-    for file in role_dir.glob("*.py"):
-        if file.name == "index.py" or file.name.startswith("_"):
-            continue
-        # 从文件名生成显示名称（去掉 .py，下划线转空格，首字母大写）
-        name = file.stem.replace("_", " ").title()
-        subpages.append((file.stem, name))
-
-    return sorted(subpages, key=lambda x: x[1])
-
-
-def load_subpage(role: str, page_name: str):
-    """
-    加载指定角色的子页面。
-
-    Args:
-        role: 用户角色
-        page_name: 子页面名称（不含 .py）
-    """
-    role_lower = role.lower()
-    page_path = get_views_dir() / role_lower / f"{page_name}.py"
-
-    if not page_path.exists():
-        st.error(f"页面 '{page_name}' 不存在")
-        return
-
-    # 动态导入并加载子页面
-    spec = importlib.util.spec_from_file_location(f"views.{role_lower}.{page_name}", page_path)
-    if spec and spec.loader:
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        if hasattr(module, "show_page"):
-            module.show_page()
-        else:
-            st.error(f"页面缺少 show_page() 函数")

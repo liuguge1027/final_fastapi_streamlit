@@ -2,7 +2,6 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from backend.models.role import Role
-from backend.models.permission import Permission
 from backend.schemas.role_schema import RoleCreate, RoleUpdate
 from backend.crud import crud_role
 
@@ -35,21 +34,3 @@ def update_role(db: Session, role_id: int, role_update: RoleUpdate) -> Optional[
 def delete_role(db: Session, role_id: int) -> bool:
     """删除角色"""
     return crud_role.delete_role(db, role_id)
-
-
-# ---- 角色权限管理 ----
-
-def get_role_permissions(db: Session, role_id: int) -> List[Permission]:
-    """获取角色已分配的权限列表"""
-    return crud_role.get_role_permissions(db, role_id)
-
-
-def assign_permissions_to_role(db: Session, role_id: int, permission_ids: List[int]) -> bool:
-    """为角色批量分配权限"""
-    return crud_role.assign_permissions_to_role(db, role_id, permission_ids)
-
-
-def remove_permissions_from_role(db: Session, role_id: int, permission_ids: List[int]) -> bool:
-    """从角色批量移除权限"""
-    return crud_role.remove_permissions_from_role(db, role_id, permission_ids)
-

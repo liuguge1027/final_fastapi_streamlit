@@ -12,7 +12,7 @@ def confirm_cleanup_7days():
     st.warning("⚠️ 此操作将删除 **7 天前** 的所有操作日志，不可恢复！")
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("确认删除", key="confirm_del_7d", type="primary", use_container_width=True):
+        if st.button("确认删除", key="confirm_del_7d", type="primary", width="stretch"):
             result = api_delete("/operation-logs/cleanup?days=7")
             if result is not None:
                 st.success("删除成功！")
@@ -20,7 +20,7 @@ def confirm_cleanup_7days():
             else:
                 st.error("删除失败，请检查后端日志")
     with c2:
-        if st.button("取消", key="cancel_del_7d", use_container_width=True):
+        if st.button("取消", key="cancel_del_7d", width="stretch"):
             st.rerun()
 
 
@@ -29,7 +29,7 @@ def confirm_cleanup_30days():
     st.warning("⚠️ 此操作将删除 **30 天前** 的所有操作日志，不可恢复！")
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("确认删除", key="confirm_del_30d", type="primary", use_container_width=True):
+        if st.button("确认删除", key="confirm_del_30d", type="primary", width="stretch"):
             result = api_delete("/operation-logs/cleanup?days=30")
             if result is not None:
                 st.success("删除成功！")
@@ -37,7 +37,7 @@ def confirm_cleanup_30days():
             else:
                 st.error("删除失败，请检查后端日志")
     with c2:
-        if st.button("取消", key="cancel_del_30d", use_container_width=True):
+        if st.button("取消", key="cancel_del_30d", width="stretch"):
             st.rerun()
 
 
@@ -46,7 +46,7 @@ def confirm_cleanup_yesterday():
     st.warning("⚠️ 此操作将删除 **昨天** 的所有操作日志，不可恢复！")
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("确认删除", key="confirm_del_1d", type="primary", use_container_width=True):
+        if st.button("确认删除", key="confirm_del_1d", type="primary", width="stretch"):
             result = api_delete("/operation-logs/cleanup?days=1")
             if result is not None:
                 st.success("删除成功！")
@@ -54,7 +54,7 @@ def confirm_cleanup_yesterday():
             else:
                 st.error("删除失败，请检查后端日志")
     with c2:
-        if st.button("取消", key="cancel_del_1d", use_container_width=True):
+        if st.button("取消", key="cancel_del_1d", width="stretch"):
             st.rerun()
 
 
@@ -66,13 +66,13 @@ def show_operation_log_management():
     # ── 批量删除按钮 ──
     del_col1, del_col2, del_col3, del_spacer = st.columns([1, 1, 1, 3])
     with del_col1:
-        if st.button("🗑 删除 7 天前", key="btn_cleanup_7d", use_container_width=True):
+        if st.button("🗑 删除 7 天前", key="btn_cleanup_7d", width="stretch"):
             confirm_cleanup_7days()
     with del_col2:
-        if st.button("🗑 删除 30 天前", key="btn_cleanup_30d", use_container_width=True):
+        if st.button("🗑 删除 30 天前", key="btn_cleanup_30d", width="stretch"):
             confirm_cleanup_30days()
     with del_col3:
-        if st.button("🗑 删除昨天", key="btn_cleanup_1d", use_container_width=True):
+        if st.button("🗑 删除昨天", key="btn_cleanup_1d", width="stretch"):
             confirm_cleanup_yesterday()
 
     st.divider()
@@ -104,7 +104,7 @@ def show_operation_log_management():
 
     with col_search:
         st.markdown("<br>", unsafe_allow_html=True)
-        do_search = st.button("🔍 查询", key="btn_search_log", use_container_width=True)
+        do_search = st.button("🔍 查询", key="btn_search_log", width="stretch")
 
     # 构建查询参数
     params = {}
@@ -141,7 +141,7 @@ def show_operation_log_management():
         })
 
     df = pd.DataFrame(table_data)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width="stretch", hide_index=True)
 
     st.caption(f"共 {len(logs)} 条记录")
 

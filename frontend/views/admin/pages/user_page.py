@@ -14,7 +14,7 @@ def show_user_management():
 
     col_add, _ = st.columns([1, 5])
     with col_add:
-        if st.button("➕ 新增用户", key="btn_add_user", use_container_width=True):
+        if st.button("➕ 新增用户", key="btn_add_user", width="stretch"):
             st.session_state.show_add_user_dialog = True
 
     users = api_get("/users")
@@ -36,7 +36,7 @@ def show_user_management():
             })
 
         df = pd.DataFrame(table_data)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
 
         # 操作区
         st.markdown("#### 操作")
@@ -50,12 +50,12 @@ def show_user_management():
             user_id = user_options[selected_user]
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("✏️ 编辑", key=f"edit_user_{user_id}", type="primary", use_container_width=True):
+                if st.button("✏️ 编辑", key=f"edit_user_{user_id}", type="primary", width="stretch"):
                     st.session_state.edit_user_id = user_id
                     st.session_state.show_edit_user_dialog = True
                     st.rerun()
             with col2:
-                if st.button("🗑️ 删除", key=f"del_user_{user_id}", use_container_width=True):
+                if st.button("🗑️ 删除", key=f"del_user_{user_id}", width="stretch"):
                     st.session_state.delete_user_id = user_id
                     st.session_state.show_delete_user_dialog = True
                     st.rerun()
@@ -168,14 +168,14 @@ def _delete_user_dialog(user_data):
     st.warning(f"确定要删除用户 **{user_data['username']}** 吗？此操作不可恢复。")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("❌ 确认删除", type="primary", use_container_width=True):
+        if st.button("❌ 确认删除", type="primary", width="stretch"):
             result = api_delete(f"/users/{user_data['id']}")
             if result:
                 st.success("用户已删除")
                 st.session_state.show_delete_user_dialog = False # Close dialog
                 st.rerun()
     with col2:
-        if st.button("取消", use_container_width=True):
+        if st.button("取消", width="stretch"):
             st.session_state.show_delete_user_dialog = False # Close dialog
             st.rerun()
 
