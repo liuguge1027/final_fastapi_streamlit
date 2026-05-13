@@ -3,12 +3,14 @@ API 客户端工具
 ==========
 封装与后端 FastAPI 的 HTTP 请求
 """
+import os
 import requests
 import streamlit as st
 from typing import Dict, Any, Optional, List
 
-# 后端 API 基础 URL
-API_BASE_URL = "http://localhost:8000"
+# 后端 API 基础 URL（支持环境变量配置，本地开发默认使用完整 URL）
+# 生产环境可通过环境变量 API_BASE_URL 配置反向代理地址（如 https://example.com/api）
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
 
 def get_headers() -> Dict[str, str]:

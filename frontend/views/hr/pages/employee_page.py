@@ -9,17 +9,18 @@ import altair as alt
 from datetime import datetime, timedelta
 from utils.api_client import api_get
 
+
 def load_data():
     """从后端获取用户数据并转换为 DataFrame"""
     users = api_get("/users")
     if not users:
         return pd.DataFrame()
-    
+
     df = pd.DataFrame(users)
     # 格式化日期
     df['created_at'] = pd.to_datetime(df['created_at'])
     df['join_month'] = df['created_at'].dt.strftime('%Y-%m')
-    
+
     # 数据增强：将角色映射为具体的业务部门（发散思维）
     role_dept_map = {
         "ADMIN": "管理中心",
@@ -29,16 +30,52 @@ def load_data():
         "USER": "研发中心"
     }
     df['department'] = df['role_code'].map(role_dept_map).fillna("通用部")
-    
+
     # 状态转换
     df['status'] = df['is_active'].apply(lambda x: "🟢 活跃" if x == 1 else "🔴 禁用")
-    
+
     return df
+
+
+def load_report_data(params=None):
+    """从报表API获取数据"""
+    from utils.api_client import api_get
+
+    if params is None:
+        params = {}
+
+    # 构建查询参数
+    query_params = params.copy()
+
+    # 调用报表API
+    response = api_get("/reports/hr/employee_statistics", params=query_params)
+
+    if not response or "data" not in response:
+        return pd.DataFrame()
+
+    return pd.DataFrame(response["data"])
+
 
 def show_page():
     st.title("👥 员工管理看板")
     st.markdown("---")
 
+    # 数据源选择
+    data_source = st.radio(
+        "选择数据源",
+        ["系统用户数据", "报表数据"],
+        horizontal=True,
+        key="employee_data_source"
+    )
+
+    if data_source == "系统用户数据":
+        show_system_user_data()
+    else:
+        show_report_data()
+
+
+def show_system_user_data():
+    """显示系统用户数据（原有逻辑）"""
     # 1. 加载数据
     with st.spinner("正在加载员工数据..."):
         df = load_data()
@@ -53,10 +90,10 @@ def show_page():
     st.sidebar.header("🔍 数据筛选")
     all_depts = ["全部"] + sorted(df['department'].unique().tolist())
     selected_dept = st.sidebar.selectbox("所属部门", all_depts)
-    
+
     all_statuses = ["全部"] + sorted(df['status'].unique().tolist())
-    selected_status = st.sidebar.selectbox("账号状态", all_statuses)
-    
+    selected_status = st.sidebar.selectbox("账号类型", all_statuses)
+
     search_query = st.sidebar.text_input("搜索姓名或邮箱", "").lower()
 
     # 应用筛选逻辑
@@ -67,13 +104,13 @@ def show_page():
         filtered_df = filtered_df[filtered_df['status'] == selected_status]
     if search_query:
         filtered_df = filtered_df[
-            filtered_df['username'].str.lower().contains(search_query) | 
+            filtered_df['username'].str.lower().contains(search_query) |
             filtered_df['email'].str.lower().contains(search_query)
         ]
 
     # 3. 核心指标 KPI
     kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
-    
+
     total_count = len(df)
     active_count = len(df[df['is_active'] == 1])
     recent_count = len(df[df['created_at'] > (datetime.now() - timedelta(days=30))])
@@ -85,7 +122,7 @@ def show_page():
     kpi_col4.metric("覆盖部门", f"{dept_count} 个")
 
     st.markdown("### 📊 维度统计")
-    
+
     # 4. 可视化图表
     chart_row1_col1, chart_row1_col2 = st.columns(2)
 
@@ -101,7 +138,7 @@ def show_page():
         st.altair_chart(base_chart, width="stretch")
 
     with chart_row1_col2:
-        st.subheader("⚖️ 账号状态比例")
+        st.subheader("⚖️ 账号类型比例")
         status_dist = filtered_df.groupby('status').size().reset_index(name='count')
         pie_chart = alt.Chart(status_dist).mark_arc(innerRadius=50).encode(
             theta=alt.Theta(field="count", type="quantitative"),
@@ -115,7 +152,7 @@ def show_page():
     trend_df = df.copy().sort_values('created_at')
     trend_df['count'] = 1
     trend_df['cumulative_count'] = trend_df['count'].cumsum()
-    
+
     area_chart = alt.Chart(trend_df).mark_area(
         line={'color': 'darkblue'},
         color=alt.Gradient(
@@ -145,9 +182,9 @@ def show_page():
         "status": "状态",
         "created_at": "入职时间"
     }
-    
+
     styled_df = filtered_df[display_cols].rename(columns=rename_dict)
-    
+
     # 使用 st.dataframe 展示，增加搜索和筛选能力
     st.dataframe(
         styled_df,
@@ -162,3 +199,67 @@ def show_page():
     if st.button("🔄 刷新数据"):
         st.rerun()
 
+
+def show_report_data():
+    """显示报表数据"""
+    st.subheader("📊 员工统计报表")
+
+    # 查询参数输入
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        department = st.text_input("部门名称（可选）", "")
+    with col2:
+        start_date = st.date_input("开始日期（可选）", value=None)
+    with col3:
+        end_date = st.date_input("结束日期（可选）", value=None)
+
+    # 分页参数
+    page = st.number_input("页码", min_value=1, value=1, step=1)
+    page_size = st.number_input("每页大小", min_value=1, value=100, step=10)
+
+    if st.button("查询报表", type="primary"):
+        with st.spinner("正在查询报表数据..."):
+            # 构建查询参数
+            params = {}
+            if department:
+                params["department"] = department
+            if start_date:
+                params["start_date"] = start_date.isoformat()
+            if end_date:
+                params["end_date"] = end_date.isoformat()
+
+            params["page"] = page
+            params["page_size"] = page_size
+            params["limit"] = page_size
+            params["offset"] = (page - 1) * page_size
+
+
+
+            # 加载报表数据
+            df = load_report_data(params)
+
+            if df.empty:
+                st.warning("暂无报表数据，请检查查询条件或SQL配置。")
+                return
+
+            # 显示数据
+            st.subheader("📈 报表数据")
+            st.dataframe(df, use_container_width=True)
+
+            # 下载功能
+            csv = df.to_csv(index=False, encoding='utf-8-sig')
+            st.download_button(
+                label="下载CSV",
+                data=csv,
+                file_name=f"employee_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv"
+            )
+
+            # 简单统计
+            st.subheader("📊 统计摘要")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("总记录数", len(df))
+            if 'employee_count' in df.columns:
+                col2.metric("员工总数", int(df['employee_count'].sum()))
+            if 'avg_salary' in df.columns:
+                col3.metric("平均薪资", f"{df['avg_salary'].mean():.2f}")

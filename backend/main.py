@@ -18,6 +18,7 @@ from backend.api.user_api import router as user_router
 from backend.api.role_api import router as role_router
 from backend.api.operation_log_api import router as operation_log_router
 from backend.api.role_menu_api import router as role_menu_router
+from backend.api.report_api import router as report_router
 
 from backend.core.security import SECRET_KEY, ALGORITHM
 from backend.services.user_service import get_user_by_username
@@ -278,6 +279,7 @@ app.include_router(user_router)
 app.include_router(role_router)
 app.include_router(operation_log_router)
 app.include_router(role_menu_router)
+app.include_router(report_router)
 
 
 @app.on_event("startup")
