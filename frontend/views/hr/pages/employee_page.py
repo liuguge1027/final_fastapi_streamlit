@@ -39,16 +39,10 @@ def load_data():
 
 def load_report_data(params=None):
     """从报表API获取数据"""
-    from utils.api_client import api_get
-
     if params is None:
         params = {}
 
-    # 构建查询参数
-    query_params = params.copy()
-
-    # 调用报表API
-    response = api_get("/reports/hr/employee_statistics", params=query_params)
+    response = api_get("/reports/hr/employee_statistics", params=params)
 
     if not response or "data" not in response:
         return pd.DataFrame()
@@ -232,8 +226,6 @@ def show_report_data():
             params["page_size"] = page_size
             params["limit"] = page_size
             params["offset"] = (page - 1) * page_size
-
-
 
             # 加载报表数据
             df = load_report_data(params)

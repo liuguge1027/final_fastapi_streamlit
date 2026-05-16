@@ -1,5 +1,5 @@
 """报表数据库配置"""
-from typing import Dict, Any, Optional
+from typing import Optional
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
 

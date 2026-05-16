@@ -1,8 +1,10 @@
 """报表数据API"""
+import io
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
-from typing import Dict, Any, Optional, List
 import json
+import pandas as pd
 
 from backend.db.database import get_db
 from backend.core.auth import get_current_user
@@ -78,9 +80,6 @@ async def execute_report(
 
         # 格式转换
         if format == "csv":
-            import pandas as pd
-            import io
-
             df = pd.DataFrame(result["data"])
             csv_buffer = io.StringIO()
             df.to_csv(csv_buffer, index=False, encoding='utf-8-sig')

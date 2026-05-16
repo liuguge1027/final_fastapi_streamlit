@@ -1,7 +1,8 @@
 """报表服务层"""
-import os
+import logging
 import re
-from typing import Dict, List, Any, Optional, Tuple
+import traceback
+from typing import Dict, List, Any, Optional
 from pathlib import Path
 from datetime import datetime
 
@@ -9,8 +10,9 @@ from jinja2 import Template
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend.core.report_config import report_config
 from backend.db.database import SessionLocal as MainSessionLocal
+
+logger = logging.getLogger(__name__)
 
 
 class ReportService:
@@ -126,10 +128,7 @@ class ReportService:
         except FileNotFoundError as e:
             raise ValueError(f"报表不存在: {e}")
         except Exception as e:
-            # 记录错误日志
-            import traceback
-            error_details = traceback.format_exc()
-            print(f"报表执行失败: {e}\n{error_details}")
+            logger.error(f"报表执行失败: {e}\n{traceback.format_exc()}")
             raise RuntimeError(f"报表查询失败: {str(e)}")
 
     def get_available_reports(self) -> Dict[str, List[str]]:

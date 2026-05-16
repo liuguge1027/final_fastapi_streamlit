@@ -9,7 +9,6 @@
 """
 
 import sys
-import os
 import pymysql
 import random
 from datetime import datetime, timedelta
@@ -73,7 +72,7 @@ def get_connection():
         return connection
     except pymysql.Error as e:
         logger.error(f"数据库连接失败: {e}")
-        sys.exit(1)
+        raise SystemExit(1)
 
 def create_table(connection):
     """创建 hr_employees 表"""
@@ -115,7 +114,7 @@ def create_table(connection):
         connection.rollback()
         return False
 
-def generate_random_employee(employee_id):
+def generate_random_employee():
     """生成随机员工数据"""
 
     # 随机选择部门
@@ -127,9 +126,7 @@ def generate_random_employee(employee_id):
     employee_name = f"{first_name}{last_name}"
 
     # 根据部门和随机因素确定薪资等级
-    if '管理' in department or '总监' in department:
-        grade = '管理'
-    elif '高级' in department or random.random() > 0.7:
+    if random.random() > 0.7:
         grade = '高级'
     elif random.random() > 0.4:
         grade = '中级'
@@ -177,7 +174,7 @@ def insert_sample_data(connection, count=50):
 
     employees_data = []
     for i in range(count):
-        employee = generate_random_employee(i + 1)
+        employee = generate_random_employee()
         employees_data.append((
             employee['employee_name'],
             employee['department_name'],
